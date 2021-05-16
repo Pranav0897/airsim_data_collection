@@ -1,0 +1,5 @@
+This directory contains code for collecting data using Computer Vision mode in Airsim. 
+
+To utilize this, first move the settings.json file in this folder to your Airsim directory (typically `C:/Users/<username>/Documents/Airsim` on Windows).
+
+This directory also contains two python scripts: `get_initial_data_cv_mode.py`, and `cv_mode_replay.py`. The first script allows you to manually control your camera, and you can move around the scene as you want, and it will record your trajectory in a series of snapshots of your location, storing the trajectory in a json file. Then, you can use the second script to replay your path using that json file, and collect data in a modified environment (say, a different environment, or same environment with a different object, or different lighting or weather conditions).
