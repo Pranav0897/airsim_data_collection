@@ -20,7 +20,7 @@ You can tweak the code in the script to alter the filenames, or comment/uncommen
 
 ### Known limitations:
 - To the best of my knowledge, at the moment it is not possible to get/set actor locations from Unreal's Python scripting when a game is playing, and neither is it possible to play/pause a game from python.
-- While you can start the Unreal Editor using UE4Editor-Cmd.exe and run scripts (see [Unreal's intro to scripting](https://docs.unrealengine.com/en-US/ProductionPipelines/ScriptingAndAutomation/Python/#thecommandline) for examples on how to do it), you can either open the editor and get it to run your code (using `ExecutePythonScript` flag), but it closes immediately after (some simple walk-around should be possible, and needs to be looked at).
+- While you can start the Unreal Editor using UE4Editor-Cmd.exe and run scripts (see [Unreal's intro to scripting](https://docs.unrealengine.com/en-US/ProductionPipelines/ScriptingAndAutomation/Python/#thecommandline) for examples on how to do it), you can either open the editor and get it to run your code (using `ExecutePythonScript` flag), but it closes immediately after (some simple walk-around should be possible, and needs to be looked at). Similarly, if you use the commandlets method to run scripts, you can potentially run the editor headless, but the levels aren't loaded as they would in the other case, so you need to figure out how to load them before this script will be useful. However, you can use the command line to programmatically open your projects `/path/to/Engine/Binaries/win64/UE4Editor-Cmd.exe /path/to/your/project.uproject`, so that's useful.
 
 ### TODO:
 - Allow choosing sensor types in command line params, and other params for data collection
