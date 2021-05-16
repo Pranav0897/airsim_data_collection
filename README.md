@@ -1,5 +1,7 @@
+### Overview
 This code extends the data collection scripts provided by the Airsim team in [this repo](https://github.com/Microsoft/DroneRescue), by using Unreal's Python API to get locations of objects-of-interest and orbiting the drone around them and collecting data.
 
+#### This readme servers as a compilation of notes and instructions to use the code in this repo
 Unreal extends its functionality by providing API calls in Python. However, there's a major caveat to this: you can only work with the blueprint before a game is running; as far as I can tell, you can't make the game play or pause from the python script, nor access actor locations when the game is running.
 
 So, to get the actor locations, we create a python script which utilizes unreal's API to get actor locations before we start the game. We can do this two ways:
@@ -16,10 +18,10 @@ Once you start the game, you can use the Python script `search_sample.py --input
 
 You can tweak the code in the script to alter the filenames, or comment/uncomment the lines in the function `take_snapshot` in `drone_orbit.py` to choose which sensor's data you want to generate.
 
-# Known limitations:
+### Known limitations:
 - To the best of my knowledge, at the moment it is not possible to get/set actor locations from Unreal's Python scripting when a game is playing, and neither is it possible to play/pause a game from python.
 - While you can start the Unreal Editor using UE4Editor-Cmd.exe and run scripts (see [Unreal's intro to scripting](https://docs.unrealengine.com/en-US/ProductionPipelines/ScriptingAndAutomation/Python/#thecommandline) for examples on how to do it), you can either open the editor and get it to run your code (using `ExecutePythonScript` flag), but it closes immediately after (some simple walk-around should be possible, and needs to be looked at).
 
-# TODO:
+### TODO:
 - Allow choosing sensor types in command line params, and other params for data collection
 - Add support to choose spawn location from multiple PlayerStart actors via Python script
