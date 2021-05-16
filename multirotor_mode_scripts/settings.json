@@ -1,0 +1,225 @@
+{
+  "SettingsVersion": 1.2,
+  "SimMode": "Multirotor",
+  "ViewMode": "FlyWithMe",
+  "Vehicles": {
+    "Copter1": {
+      "VehicleType": "SimpleFlight",
+      "DefaultVehicleState": "Armed",
+
+
+      "Sensors": {
+        "Imu": {
+          "SensorType": 2,
+          "Enabled": true
+        },
+        "Gps": {
+          "SensorType": 3,
+          "Enabled": true
+        },
+        "Lidar1": {
+          "SensorType": 6,
+          "Enabled": true,
+          "NumberOfChannels": 1,
+          "PointsPerSecond": 5000,
+          "DrawDebugPoints": true,
+          "RotationsPerSecond": 10,
+          "VerticalFOVUpper": 0,
+          "VerticalFOVLower": 0,
+          "HorizontalFOVStart": 0,
+          "HorizontalFOVEnd": 359,
+          "DataFrame": "SensorLocalFrame"
+        }
+      },
+      "Cameras": {
+        "front_center": {
+          "CaptureSettings": [
+            {
+              "ImageType": 0,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 1,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 2,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 3,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 4,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 5,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 6,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            },
+            {
+              "ImageType": 7,
+              "Width": 1920,
+              "Height": 1080,
+              "FOV_Degrees": 90,
+              "AutoExposureSpeed": 100,
+              "AutoExposureBias": 0,
+              "AutoExposureMaxBrightness": 0.68,
+              "AutoExposureMinBrightness": 0.03
+            }
+          ],
+          "X": 0.0, "Y": 0.75, "Z": 0,
+          "Pitch": 0.0, "Roll": 0.0, "Yaw": 0.0
+        }
+      }
+    }
+  },
+  "TimeOfDay": {
+    "Enabled": false,
+    "StartDateTime": "",
+    "CelestialClockSpeed": 1,
+    "StartDateTimeDst": false,
+    "UpdateIntervalSecs": 60
+  },
+  "Recording": {
+    "RecordOnMove": false,
+    "RecordInterval": 0.1,
+    "Cameras": [
+      {
+        "CameraName": "front_center",
+        "ImageType": 0,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 1,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 2,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 3,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 4,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 5,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 6,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      },
+      {
+        "CameraName": "front_center",
+        "ImageType": 7,
+        "Width": 1920,
+        "Height": 1080,
+        "FOV_Degrees": 90,
+        "AutoExposureSpeed": 100,
+        "AutoExposureBias": 0,
+        "AutoExposureMaxBrightness": 0.68,
+        "AutoExposureMinBrightness": 0.03
+      }
+    ]
+  }
+}
