@@ -1,5 +1,7 @@
 ### Overview
-This code extends the data collection scripts provided by the Airsim team in [this repo](https://github.com/Microsoft/DroneRescue), by using Unreal's Python API to get locations of objects-of-interest and orbiting the drone around them and collecting data.
+This code extends the data collection scripts provided by the Airsim team in [this repo](https://github.com/Microsoft/DroneRescue), by using Unreal's Python API to get locations of objects-of-interest and orbiting the drone around them and collecting data, in Multi-rotor mode.
+
+First, to utilize multirotor mode, you can use the settings.json file in this folder, or your own settings.json file, and move it to your Airsim directory (typically C:/Users/<username>/Documents/Airsim on Windows)
 
 #### This readme servers as a compilation of notes and instructions to use the code in this repo
 Unreal extends its functionality by providing API calls in Python. However, there's a major caveat to this: you can only work with the blueprint before a game is running; as far as I can tell, you can't make the game play or pause from the python script, nor access actor locations when the game is running.
