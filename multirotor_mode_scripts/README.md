@@ -1,5 +1,7 @@
 ### Overview
-This code extends the data collection scripts provided by the Airsim team in [this repo](https://github.com/Microsoft/DroneRescue), by using Unreal's Python API to get locations of objects-of-interest and orbiting the drone around them and collecting data.
+This code extends the data collection scripts provided by the Airsim team in [this repo](https://github.com/Microsoft/DroneRescue), by using Unreal's Python API to get locations of objects-of-interest and orbiting the drone around them and collecting data, in Multi-rotor mode.
+
+First, to utilize multirotor mode, you can use the settings.json file in this folder, or your own settings.json file, and move it to your Airsim directory (typically `C:/Users/<username>/Documents/Airsim` on Windows)
 
 #### This readme servers as a compilation of notes and instructions to use the code in this repo
 Unreal extends its functionality by providing API calls in Python. However, there's a major caveat to this: you can only work with the blueprint before a game is running; as far as I can tell, you can't make the game play or pause from the python script, nor access actor locations when the game is running.
@@ -14,7 +16,7 @@ Before you start the game, make sure you have exactly one PlayerStart Actor in t
 
 Now, with a Player Start Actor in place, select the dropdown under Play, and select `Spawn Player at..` to `Default Player Start`. Now, once you run the Unreal script, it writes the location of the object-of-interest (or the mean of the locations, in case more than one instance is present), and the start location, in the file, and you can now start the game, and it will spawn the new player at your location of choice.
 
-Once you start the game, you can use the Python script `search_sample.py --input_filename <file/generated/by/Unreal/python/script> --output_dir <directory/to/store/dataset/>`
+Once you start the game, you can use the Python script `search_sample.py --input_filename <file/generated/by/Unreal/python/script> --output_dir <directory/to/store/dataset/>`. This script first moves the drone to the required height, then takes it near the barrels (they are the current object-of-interest, you can change that by modifying the actor tag being searched for in the `get_static_mesh_locations.py` script), and then completes several orbits around them, modifying the weather conditions after each orbit. The simulation clock has also been sped up, so that the position of sun in the sky changes much faster. You can control those settings in the `search_sample.py` script.
 
 You can tweak the code in the script to alter the filenames, or comment/uncomment the lines in the function `take_snapshot` in `drone_orbit.py` to choose which sensor's data you want to generate.
 
