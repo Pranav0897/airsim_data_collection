@@ -6,6 +6,17 @@ import math
 import time
 import argparse
 from PIL import Image
+import json
+
+
+def recursive_convert_state_to_dict(state):
+    if hasattr(state,'__dict__'):
+        d = {}
+        for k in state.__dict__.keys():
+            d[k] = recursive_convert_state_to_dict(state.__dict__[k])
+        return d
+    else:
+        return state
 
 
 class Position:
@@ -31,6 +42,7 @@ class OrbitNavigator:
         self.snapshot_index = 0
         self.photo_prefix = photo_prefix
         self.takeoff = True  # whether we did a take off
+        self.json_data_list = {}
 
         if self.snapshots is not None and self.snapshots > 0:
             self.snapshot_delta = 360 / self.snapshots
@@ -148,6 +160,10 @@ class OrbitNavigator:
                 vx, vy, z, 1, airsim.DrivetrainType.MaxDegreeOfFreedom, airsim.YawMode(False, camera_heading))
 
         self.client.moveToPositionAsync(start.x_val, start.y_val, z, 2).join()
+        # orbiting done. store all positions
+        k = list(self.json_data_list.keys())
+        with open("airsim_snapshots_timesteps_{}_to_{}.json".format(min(k), max(k)), 'w') as f1:
+            json.dump(self.json_data_list, f1)
 
     def track_orbits(self, angle):
         # tracking # of completed orbits is surprisingly tricky to get right in order to handle random wobbles
@@ -216,12 +232,12 @@ class OrbitNavigator:
                                         airsim.YawMode(False, self.camera_heading))
         responses = self.client.simGetImages([
             airsim.ImageRequest("front_center", airsim.ImageType.Scene),
-            # airsim.ImageRequest("front_center", airsim.ImageType.DepthPlanner, True),
-            # airsim.ImageRequest("front_center", airsim.ImageType.DepthPerspective, True),
-            # # airsim.ImageRequest("front_center", airsim.ImageType.DepthVis),
-            # # airsim.ImageRequest("front_center", airsim.ImageType.DisparityNormalized),
-            # airsim.ImageRequest("front_center", airsim.ImageType.Segmentation),
-            # airsim.ImageRequest("front_center", airsim.ImageType.SurfaceNormals),
+            airsim.ImageRequest("front_center", airsim.ImageType.DepthPlanner, True),
+            airsim.ImageRequest("front_center", airsim.ImageType.DepthPerspective, True),
+            # airsim.ImageRequest("front_center", airsim.ImageType.DepthVis),
+            # airsim.ImageRequest("front_center", airsim.ImageType.DisparityNormalized),
+            airsim.ImageRequest("front_center", airsim.ImageType.Segmentation),
+            airsim.ImageRequest("front_center", airsim.ImageType.SurfaceNormals),
             airsim.ImageRequest("front_center", airsim.ImageType.Infrared)])
 
         # print('Retrieved images: %d', len(responses))
@@ -240,7 +256,8 @@ class OrbitNavigator:
                     self.photo_prefix + ('airsim_snapshot_%d_timestep_%d.png')%(response.image_type, self.snapshot_index)
                     ), response.image_data_uint8)
 
-        # json_list[t] = recursive_convert_state_to_dict(client.simGetVehiclePose('Copter1'))
+        json_list = recursive_convert_state_to_dict(self.client.getMultirotorState())
+        self.json_data_list[self.snapshot_index] = json_list
         # time.sleep(SECS_BETWEEN_CAPTURE)
         
         # responses = self.client.simGetImages([airsim.ImageRequest(

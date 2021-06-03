@@ -160,18 +160,20 @@ if __name__ == '__main__':
 
     client.simEnableWeather(True)
     weather_patterns = [None, [airsim.WeatherParameter.Fog],[airsim.WeatherParameter.MapleLeaf, airsim.WeatherParameter.RoadLeaf],[airsim.WeatherParameter.Rain, airsim.WeatherParameter.Roadwetness], [airsim.WeatherParameter.Snow, airsim.WeatherParameter.RoadSnow]]
-    client.simSetTimeOfDay(True,is_start_datetime_dst=True,celestial_clock_speed=450, update_interval_secs=1)
-    client.moveToPositionAsync(
-        0, 0, z, 1, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
-        
-    for idx in range(len(weather_patterns)):
-        if idx > 1:
-            for ptrn in weather_patterns[idx-1]:
-                client.simSetWeatherParameter(ptrn, 0)
-        if idx>0:
-            for ptrn in weather_patterns[idx]:
-                client.simSetWeatherParameter(ptrn, 0.9)
-        OrbitAnimal(actor_location['x'], actor_location['y'], 20, 0.8, 1, -30, "Barrel_weather_{}".format(idx), args.output_dir) 
+
+    for hours in range(8,21,3):
+        client.simSetTimeOfDay(True, start_datetime ="2018-02-12 {}:00:00".format(hours), is_start_datetime_dst=True,celestial_clock_speed=1, update_interval_secs=1)
+        client.moveToPositionAsync(
+            0, 0, z, 1, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+            
+        for idx in range(len(weather_patterns)):
+            if idx > 1:
+                for ptrn in weather_patterns[idx-1]:
+                    client.simSetWeatherParameter(ptrn, 0)
+            if idx>0:
+                for ptrn in weather_patterns[idx]:
+                    client.simSetWeatherParameter(ptrn, 0.9)
+            OrbitAnimal(actor_location['x'], actor_location['y'], 20, 0.8, 1, -30, "tod_{}_weather_{}".format(hours, idx), args.output_dir) 
         
     # OrbitAnimal(19.6, 9.6, 2, 0.4, 1, -30, "BlackSheep")
 

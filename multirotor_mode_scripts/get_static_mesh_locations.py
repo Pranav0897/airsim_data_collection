@@ -11,19 +11,19 @@ def mat2str(mat):
 actor_list = unreal.EditorLevelLibrary.get_all_level_actors()
 unreal.log("{} actors present in the current level".format(len(actor_list)))
 with open('C:/Users/prana/Downloads/UCSD/dronelab/LLNL/py_ue4_script_output2.txt','w') as f1:
-    f1.write("{} actors present in the current level".format(len(actor_list)))
+    # f1.write("{} actors present in the current level".format(len(actor_list)))
     locs = [0,0,0]
     cnt = 0
     start_loc = None
     start_loc_actor = None
     for actor in actor_list:
-        f1.write(actor.get_path_name())
-        f1.write(', ')
+        # f1.write(actor.get_path_name())
+        # f1.write(', ')
         # f1.write(mat2str(actor.get_actor_transform().to_matrix()))
         # f1.write(', ')
-        f1.write(vec2str(actor.get_actor_location()))
-        f1.write('\n')
-        f1.write(', '.join([t for t in actor.tags]))
+        # f1.write(vec2str(actor.get_actor_location()))
+        # f1.write('\n')
+        # f1.write(', '.join([t for t in actor.tags]))
         
         if 'barrel' in str(actor.get_path_name()).lower():
             loc = actor.get_actor_location()
