@@ -7,7 +7,7 @@ import time
 import argparse
 from PIL import Image
 import json
-
+import numpy as np
 
 def recursive_convert_state_to_dict(state):
     if hasattr(state,'__dict__'):
@@ -25,11 +25,39 @@ class Position:
         self.y = pos.y_val
         self.z = pos.z_val
 
+class NumpyEncoder(json.JSONEncoder):
+    """ Custom encoder for numpy data types """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+
+            return int(obj)
+
+        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+            return float(obj)
+
+        elif isinstance(obj, (np.complex_, np.complex64, np.complex128)):
+            return {'real': obj.real, 'imag': obj.imag}
+
+        elif isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+
+        elif isinstance(obj, (np.bool_)):
+            return bool(obj)
+
+        elif isinstance(obj, (np.void)): 
+            return None
+
+        return json.JSONEncoder.default(self, obj)
+
 # Make the drone fly in a circle.
 
 
 class OrbitNavigator:
-    def __init__(self, photo_prefix="photo_", radius=2, altitude=10, speed=2, iterations=1, center=[1, 0], snapshots=None, image_dir="./images_blah/"):
+    def __init__(self, photo_prefix="photo_", radius=2, altitude=10, speed=2, iterations=1, center=[1, 0], 
+                        snapshots=None, image_dir="./images_blah/", filename_offset = 0, mesh_colors = {}):
+        
         self.radius = radius
         self.altitude = altitude
         self.speed = speed
@@ -43,6 +71,8 @@ class OrbitNavigator:
         self.photo_prefix = photo_prefix
         self.takeoff = True  # whether we did a take off
         self.json_data_list = {}
+        self.offset = filename_offset
+        self.mesh_colors = mesh_colors
 
         if self.snapshots is not None and self.snapshots > 0:
             self.snapshot_delta = 360 / self.snapshots
@@ -66,7 +96,9 @@ class OrbitNavigator:
         self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
         self.client.enableApiControl(True)
-
+        # for name, id_color in self.mesh_colors.items():
+        #     self.client.simSetSegmentationObjectID(name, id_color[0])
+        
         self.home = self.client.getMultirotorState().kinematics_estimated.position
         # check that our home position is stable
         start = time.time()
@@ -86,6 +118,24 @@ class OrbitNavigator:
         self.center = self.client.getMultirotorState().kinematics_estimated.position
         self.center.x_val += cx
         self.center.y_val += cy
+
+        # setting up directories to store images in
+        self.subdirs = {
+            airsim.ImageType.Scene: 'Scene' ,
+            airsim.ImageType.DepthPlanar: 'DepthPlanar' ,
+            airsim.ImageType.DepthPerspective: 'DepthPerspective' ,
+            airsim.ImageType.Segmentation: 'Segmentation' ,
+            airsim.ImageType.SurfaceNormals: 'SurfaceNormals' ,
+            airsim.ImageType.Infrared: 'Infrared' }
+
+        if not os.path.exists(self.image_dir):
+            os.makedirs(self.image_dir)
+        for subdir in self.subdirs.values():
+            sdpath = os.path.join(self.image_dir, subdir)
+            if not os.path.exists(sdpath):
+                os.makedirs(sdpath)
+        # list of dicts for storing semantic segmentation bounding boxes
+        self.semseg_list = {}
 
     def start(self):
         print("arming the drone...")
@@ -162,8 +212,15 @@ class OrbitNavigator:
         self.client.moveToPositionAsync(start.x_val, start.y_val, z, 2).join()
         # orbiting done. store all positions
         k = list(self.json_data_list.keys())
-        with open("airsim_snapshots_timesteps_{}_to_{}.json".format(min(k), max(k)), 'w') as f1:
+        with open(os.path.join(self.image_dir, self.photo_prefix+"airsim_snapshots_timesteps_{}_to_{}.json".format(min(k), max(k))), 'w') as f1:
             json.dump(self.json_data_list, f1)
+        
+        k = list(self.semseg_list.keys())
+        with open(os.path.join(self.image_dir, self.photo_prefix+"airsim_annotations_timesteps_{}_to_{}.json".format(min(k), max(k))), 'w') as f1:
+            json.dump(self.semseg_list, f1, indent=4, sort_keys=True,
+              separators=(', ', ': '), cls=NumpyEncoder)
+              
+        return self.snapshot_index + self.offset
 
     def track_orbits(self, angle):
         # tracking # of completed orbits is surprisingly tricky to get right in order to handle random wobbles
@@ -223,8 +280,6 @@ class OrbitNavigator:
         return crossing
 
     def take_snapshot(self):
-        if not os.path.exists(self.image_dir):
-            os.makedirs(self.image_dir)
 
         # first hold our current position so drone doesn't try and keep flying while we take the picture.
         pos = self.client.getMultirotorState().kinematics_estimated.position
@@ -232,32 +287,67 @@ class OrbitNavigator:
                                         airsim.YawMode(False, self.camera_heading))
         responses = self.client.simGetImages([
             airsim.ImageRequest("front_center", airsim.ImageType.Scene),
-            airsim.ImageRequest("front_center", airsim.ImageType.DepthPlanner, True),
+            airsim.ImageRequest("front_center", airsim.ImageType.DepthPlanar, True),
             airsim.ImageRequest("front_center", airsim.ImageType.DepthPerspective, True),
             # airsim.ImageRequest("front_center", airsim.ImageType.DepthVis),
             # airsim.ImageRequest("front_center", airsim.ImageType.DisparityNormalized),
-            airsim.ImageRequest("front_center", airsim.ImageType.Segmentation),
+            airsim.ImageRequest("front_center", airsim.ImageType.Segmentation, False, False),
             airsim.ImageRequest("front_center", airsim.ImageType.SurfaceNormals),
             airsim.ImageRequest("front_center", airsim.ImageType.Infrared)])
 
         # print('Retrieved images: %d', len(responses))
-
+        bbox_list = {}
         for response in responses:
             if response.pixels_as_float:
                 # print("Type %d, size %d" % (response.image_type, len(response.image_data_float)))
                 airsim.write_pfm(
-                    os.path.join(self.image_dir,
-                    self.photo_prefix + ('airsim_snapshot_%d_timestep_%d.png')%(response.image_type, self.snapshot_index)
+                    os.path.join(os.path.join(self.image_dir, self.subdirs[response.image_type]),
+                    self.photo_prefix + ('%d.png')%(self.snapshot_index+self.offset)
                     ), airsim.get_pfm_array(response))
             else:
                 # print("Type %d, size %d" % (response.image_type, len(response.image_data_uint8)))
-                airsim.write_file(
-                    os.path.join(self.image_dir,
-                    self.photo_prefix + ('airsim_snapshot_%d_timestep_%d.png')%(response.image_type, self.snapshot_index)
+                if response.image_type == airsim.ImageType.Segmentation:
+                # semantic segmentaion usually is of type uint8
+                
+                    img = np.fromstring(response.image_data_uint8, dtype=np.uint8).reshape(response.height, response.width, 3)
+                    new_img = img.astype(np.uint32)
+                    # img = np.flipud(img)
+                    packed = new_img[:,:,0]<<16 | new_img[:,:,1]<<8 | new_img[:,:,2]
+                    
+                    img_size = img.shape[:2]
+                    for name, id_color in self.mesh_colors.items():
+                        id = id_color[0]
+                        color = np.asarray(id_color[1], dtype=np.uint32)
+                        packed_color = color[0] << 16 | color[1]<<8 | color[2]
+                        px, py = np.where(packed==packed_color)
+                        if len(px) == 0 and len(py) == 0:
+                            # object not in view
+                            bbox_list[name] = None
+                        else:
+                            bbox_list[name] = [px.min(), py.min(), px.max(), py.max()]
+                    Image.fromarray(img).save(os.path.join(os.path.join(self.image_dir, self.subdirs[response.image_type]),
+                    self.photo_prefix + ('%d.png')%(self.snapshot_index+self.offset)
+                    ))
+                else:
+                    airsim.write_file(
+                    os.path.join(os.path.join(self.image_dir, self.subdirs[response.image_type]),
+                    self.photo_prefix + ('%d.png')%(self.snapshot_index+self.offset)
                     ), response.image_data_uint8)
-
+                
         json_list = recursive_convert_state_to_dict(self.client.getMultirotorState())
-        self.json_data_list[self.snapshot_index] = json_list
+        self.json_data_list[self.snapshot_index+self.offset] = json_list
+        d = {}
+        d['image_id'] = self.snapshot_index + self.offset
+        d['file_name'] = self.photo_prefix + ('%d.png')%(self.snapshot_index+self.offset)
+        d['size'] = list(img_size) + [3]
+        d['object'] = [{'object_id':id_color[0], 'class':name, 'bounding_box':tuple(bbox_list[name])} for name, id_color in self.mesh_colors.items() if bbox_list[name] is not None]
+        
+        self.semseg_list[self.snapshot_index+self.offset] = d
+        # k = list(self.semseg_list.keys())
+        # with open(os.path.join(self.image_dir, self.photo_prefix+"airsim_annotations_timesteps_{}_to_{}.json".format(min(k), max(k))), 'w') as f1:
+        #     json.dump(self.semseg_list, f1, indent=4, sort_keys=True,
+        #       separators=(', ', ': '), cls = NumpyEncoder)
+
         # time.sleep(SECS_BETWEEN_CAPTURE)
         
         # responses = self.client.simGetImages([airsim.ImageRequest(
