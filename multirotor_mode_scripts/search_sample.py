@@ -11,49 +11,33 @@ import random
 import csv
 
 def get_ue_coordinates_and_mesh_ids(filename):
-    d = {}
+    list_of_start_locs = []
     try:
-        cx, cy, cz = 0,0,0
-        px, py, pz = 0,0,0
-        
+        center_coords = []
+        orbit_centers = []
+        mesh_ids = []
         data = open(filename, 'r').read().strip().split('\n')
         if len(data) < 1:
             print("Empty file!")
             return None
-        # elif len(data) < 2:
-        #     if not ('start' in data.lower() or 'barrel' in data.lower()):
-        #         print("Invalid stuff in file!")
-        #         return None
-        #     else:
-        #         if 'start' in data.lower():
-        #             # no barrels in the scene?
-        #             print("No barrels in the list of actors in the scene, it seems")
-        #             return None 
-        #         else:
-        #             # there are barrels, but a player start location was not specified.
-        #             # therefore, assume that we start from 0,0,0
-        #             coords = [float(p) for p in re.findall(r'[\d.-]+', data[0])]
-        #             assert len(coords)==3, print("Found this as the coordinates: {}".format(data))
-        #             px,py,pz = coords[:3]
-        # else:
-        # assert all([(('start' in d.lower()) or ('barrel' in d.lower())) for d in data]), print("Invalid data: {}".format(data))
-        coords = [[float(p) for p in re.findall(r'[\d.-]+', d)] for d in data[:2]]
-        if 'start' in data[0].lower():
-            cx, cy, cz = coords[0]
-            px, py, pz = coords[1]
-        else:
-            cx, cy, cz = coords[1]
-            px, py, pz = coords[0]
-        
-        mesh_ids = [d.strip() for d in data[2:]]
-        # x,y,z = [float(f) for f in f1.read().strip().split(',')]
-        # f1.close()
-        print([px,py,pz])
-        print([cx,cy,cz])
-        d['x'] = (px-cx)/100
-        d['y'] = (py-cy)/100
-        d['z'] = -(pz-cz)/100
-        return d, mesh_ids
+        for d in data:
+            if 'playerstart' in d:
+                center_coords = [float(p) for p in re.findall(r'[\d.-]+', d)]
+                assert len(center_coords)==3, print(d)
+            elif 'median_location' in d:
+                orbit_center = [float(p) for p in re.findall(r'[\d.-]+', d)]
+                assert len(center_coords)==3, print(d)
+                orbit_centers.append(orbit_center)
+            else:
+                mesh_ids.append(d.strip())
+
+        print("Starting location: {}".format(center_coords))
+        print("Orbit centers: {}".format(orbit_centers))
+        for oc in orbit_centers:
+            dc = {c: (oc[i]-center_coords[i])/100 for i,c in enumerate(['x','y','z'])}
+            dc['z'] = -dc['z']
+            list_of_start_locs.append(dc)
+        return list_of_start_locs, mesh_ids
     except Exception as e:
         print(e)
         return None
@@ -71,7 +55,7 @@ def OrbitAnimal(cx, cy, radius, speed, altitude, camera_angle, animal, image_dir
 
     x = cx - radius
     y = cy
-
+    
     # set camera angle
     client.simSetCameraPose(0, airsim.to_quaternion(
         camera_angle * math.pi / 180, 0, 0))  # radians
@@ -80,7 +64,9 @@ def OrbitAnimal(cx, cy, radius, speed, altitude, camera_angle, animal, image_dir
     print("moving to position...")
     
     client.moveToPositionAsync(
-        x, y, z, 5, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+        x, y, global_z2, 5, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+    client.moveToPositionAsync(
+        x, y, global_z, 5, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
     pos = client.getMultirotorState().kinematics_estimated.position
 
     dx = x - pos.x_val
@@ -92,7 +78,7 @@ def OrbitAnimal(cx, cy, radius, speed, altitude, camera_angle, animal, image_dir
     print("correcting position and yaw...")
     while abs(dx) > 1 or abs(dy) > 1 or abs(yaw) > 0.1:
         client.moveToPositionAsync(
-            x, y, z, 0.25, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+            x, y, global_z, 0.25, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
         pos = client.getMultirotorState().kinematics_estimated.position
         dx = x - pos.x_val
         dy = y - pos.y_val
@@ -108,7 +94,8 @@ def OrbitAnimal(cx, cy, radius, speed, altitude, camera_angle, animal, image_dir
 
     # let's orbit around the animal and take some photos
     nav = drone_orbit.OrbitNavigator(photo_prefix=animal, radius=radius, altitude=altitude, speed=speed, iterations=1, center=[
-                                     cx - pos.x_val, cy - pos.y_val], snapshots=60, image_dir=image_dir, filename_offset = image_stamp_offset, mesh_colors = mesh_colors)
+                                     cx - pos.x_val, cy - pos.y_val], snapshots=60, image_dir=image_dir, filename_offset = image_stamp_offset, 
+                                     mesh_colors = mesh_colors)
     offset = nav.start()
     return offset
 
@@ -142,39 +129,40 @@ if __name__ == '__main__':
     if landed == airsim.LandedState.Landed:
         print("taking off...")
         # pos = client.getMultirotorState().kinematics_estimated.position
-        # z = pos.z_val - 1
+        # global_z = pos.z_val - 1
         client.takeoffAsync().join()
     else:
         print("already flying...")
         # client.hover()
         # pos = client.getMultirotorState().kinematics_estimated.position
-        # z = pos.z_val
+        # global_z = pos.z_val
 
     # actor_loc  = unreal.EditorLevelLibrary.get_all_level_actors()[-1].get_actor_transform()
     # actor_location = actor_loc.translation
     # actor_location = {'x':-23.70000000, 'y': -55.80000000, 'z': -30.10000000}
-    actor_location, mesh_ids = get_ue_coordinates_and_mesh_ids(args.input_filename)
-    z = actor_location['z'] - 8
+    actor_locations, mesh_ids = get_ue_coordinates_and_mesh_ids(args.input_filename)
 
     # Start the navigation task
-
-    client.simEnableWeather(True)
-    weather_patterns = [None, [airsim.WeatherParameter.Fog],[airsim.WeatherParameter.MapleLeaf, airsim.WeatherParameter.RoadLeaf],
-            [airsim.WeatherParameter.Rain, airsim.WeatherParameter.Roadwetness], [airsim.WeatherParameter.Snow, airsim.WeatherParameter.RoadSnow]]
     
+
+    #########################################################################################
+    ### Set up appropriate segmentation ids for instance segmentaion of all objects of interest
+
     scene_objects = client.simListSceneObjects()
     print("number of objects in scene: {}".format(len(scene_objects)))
 
     # mesh_colors = list(random.sample(range(1,255), len(mesh_ids)))
     set_count = 0
     success = client.simSetSegmentationObjectID(".*", 255, True)
-    extra_meshes = ["[\w]*[sS]ky[\w]*","[\w]*[rR]oad[\w]*", "[\w]*[bB]uilding[\w]*", "[\w]*[rR]oof[\w]*", "[\w]*[mM]ountain[\w]*", "[\w]*[tT]ree[\w]*"]
+    extra_meshes = ["[\w]*[sS]ky[\w]*","[\w]*[rR]oad[\w]*", "[\w]*[rR]oof[\w]*", "[\w]*[mM]ountain[\w]*", "[\w]*[tT]ree[\w]*"]
     all_mesh_colors = list(random.sample(range(1,255), len(mesh_ids+extra_meshes)))
     mesh_colors = all_mesh_colors[:len(mesh_ids)]
     bg_colors = all_mesh_colors[len(mesh_ids):]
-    regex_flag = [False]*len(mesh_ids) + [True]*len(extra_meshes)
-    presaved_values = {'SM_Barrel_01_Closed_2': 177, 'SM_Barrel_02_Opened_5': 150, 'SM_Barrel_04_Opened_8': 60, 'SM_Barrel_05_Opened_11': 107,
-                         '[\w]*[sS]ky[\w]*': 35, '[\w]*[rR]oad[\w]*': 77, '[\w]*[bB]uilding[\w]*': 125, '[\w]*[rR]oof[\w]*': 47}
+    regex_flag = [False for _ in range(len(mesh_ids))] + [True for _ in range(len(extra_meshes))]
+    print("True {}, False: {}".format(sum(regex_flag), len(regex_flag)-sum(regex_flag)))
+    presaved_values = dict([('SM_Barrel_01_Closed_building1', 156), ('SM_Barrel_02_Opened_building1', 236), ('SM_Barrel_04_Opened_building1', 248), ('SM_Barrel_05_Opened_building1', 123), ('SM_TableRound_building1', 234), ('SM_MilitaryCrate_02_building1', 35), ('SM_MilitaryCrate_05_building1', 226), ('SM_MilitaryCrateClosed_01_building1', 28), ('SM_Crate_02_building1', 40), ('SM_Chair_building1', 47), ('SM_Barrel_01_Closed_groundfloor', 15), ('SM_Barrel_02_Closed_groundfloor', 212), ('SM_Barrel_04_Closed_groundfloor', 10), ('SM_CardboardBox_05_groundfloor', 147), ('SM_Crate_04_groundfloor', 122), ('SM_Pallet_02_groundfloor', 227), ('SM_Pallet_3_groundfloor', 85), ('SM_Tire_04_groundfloor', 199), ('SM_Chair2_groundfloor', 80), ('SM_Barrel_01_Closed2_building2', 217), ('SM_Barrel_01_Closed3_building2', 143), ('SM_Barrel_01_Closed4_building2', 55), ('SM_Barrel_02_Opened2_building2', 133), ('SM_Barrel_02_Opened3_building2', 129), ('SM_Barrel_02_Opened4_building2', 246), ('SM_Barrel_04_Opened2_building3', 81), ('SM_Barrel_04_Closed_building3', 206), ('SM_Barrel_05_Opened2_building3', 107), ('SM_MilitaryCrateClosed_2_building3', 216), ('SM_Pallet_01_building3', 186), ('SM_Tire_04_62', 92), ('SM_Barrel_02_Closed_building3', 233), ('SM_Rock_building3', 214), ('SM_Couch_building4', 223), ('SM_Couch2_building4', 197), ('SM_Couch3_building4', 239), ('SM_Couch4_building4', 190), ('SM_Couch5_building4', 65), ('SM_Couch6_building4', 157), ('SM_Barrel_01_Closed2_building4', 142), ('SM_Barrel_01_Closed3_building4', 74), ('SM_Barrel_01_Closed4_building4', 183), ('SM_Barrel_02_Closed_building4', 103), ('SM_Barrel_02_Closed2_building4', 100), ('SM_Barrel_02_Closed3_building4', 117), ('SM_CardboardBox_01_building4', 114), ('SM_CardboardBox_2_building4', 60), ('SM_Crate_3_building4', 141), ('SM_Crate_4_building4', 64), ('SM_Barrel_01_Closed2_ground2', 160), ('SM_Barrel_01_Closed3_ground2', 77), ('SM_Barrel_02_Closed_ground2', 83), ('SM_Barrel_01_Closed4_ground2', 175), ('SM_Barrel_03_Opened_ground2', 126), ('SM_Barrel_04_Opened2_ground2', 244), ('SM_Barrel_01_Closed5_ground2', 131), ('SM_Barrel_01_Closed6_ground2', 30), ('SM_Crate_3_ground2', 42), ('SM_Crate_04_ground2', 87), ('SM_Crate_01_ground2', 163), ('SM_Crate_03_ground2', 204), ('SM_Barrel_03_Closed_building5', 153), ('SM_MilitaryCrate_02_building6', 165), ('SM_MilitaryCrateClosed_01_170', 232), ('[\\w]*[sS]ky[\\w]*', 35), ('[\\w]*[rR]oad[\\w]*', 77), ('[\\w]*[rR]oof[\\w]*', 47), ('[\\w]*[mM]ountain[\\w]*', 219), ('[\\w]*[tT]ree[\\w]*', 120)])
+    #{'SM_Barrel_01_Closed_2': 177, 'SM_Barrel_02_Opened_5': 150, 'SM_Barrel_04_Opened_8': 60, 'SM_Barrel_05_Opened_11': 107,
+                        #  '[\w]*[sS]ky[\w]*': 35, '[\w]*[rR]oad[\w]*': 77, '[\w]*[rR]oof[\w]*': 47}
     # {'SM_Barrel_01_Closed_2': 118, 'SM_Barrel_02_Opened_5': 234, 'SM_Barrel_04_Opened_8': 85, 
                         # 'SM_Barrel_05_Opened_11': 114, '[\w]*[sS]ky[\w]*': 224, '[\w]*[rR]oad[\w]*': 137, '[\w]*[bB]uilding[\w]*': 21, '[\w]*[rR]oof[\w]*': 10}
     # mesh_colors = [presaved_values.get(n, None) if presaved_values.get(n, None) is not None else all_mesh_colors[idx] for idx, n in enumerate(mesh_ids)]
@@ -195,13 +183,20 @@ if __name__ == '__main__':
     # all_mesh_colors = [presaved_values[n] if presaved_values.get(n, None) is not None else all_mesh_colors[idx] for idx, n in enumerate(mesh_ids+extra_meshes)]
 
     print("Meshes of interest, and their colors: ", list(zip(mesh_ids+extra_meshes, all_mesh_colors)))
+    set_mesh_id = []
+    not_set_mesh_id = []
     for meshname, color, rf in zip(mesh_ids+extra_meshes, all_mesh_colors, regex_flag):
         success = client.simSetSegmentationObjectID(meshname, color, rf)
         if success:
+            set_mesh_id.append((meshname, color))
             set_count += 1
+        else:
+            not_set_mesh_id.append((meshname, color))
+    print("Was unable to set custom ids for ", not_set_mesh_id)
     print("Was able to set custom colors for {} out of {} objects".format(set_count, len(mesh_ids)))
     mesh_color_dict = dict(zip(mesh_ids, mesh_colors))
     id_color_dict = {}
+    list_of_colors = []
     with open('color_id_scheme_new.csv', 'r') as f1:
         data = f1.read().strip().split('\n')
         for line in data:
@@ -209,37 +204,63 @@ if __name__ == '__main__':
                 continue
             id, r, g, b = [int(v) for v in re.findall(r'[\d]+', line)[:4]]
             id_color_dict[id] = [r,g,b]
+            list_of_colors.append((r,g,b))
+    print("duplicate colors: {}".format(len(list_of_colors) - len(set(list_of_colors))))
     id_set = set(id_color_dict.keys())
     assert all([v in id_set for _, v in mesh_color_dict.items()]), print(id_set, mesh_color_dict.items())
     mesh_id_color_dict = {k:(v, id_color_dict[v]) for k, v in mesh_color_dict.items()}
+    ##############################################################################################################################
+    
+    client.simEnableWeather(True)
+    weather_patterns = [None, [airsim.WeatherParameter.Fog],[airsim.WeatherParameter.MapleLeaf, airsim.WeatherParameter.RoadLeaf],
+            [airsim.WeatherParameter.Rain, airsim.WeatherParameter.Roadwetness], [airsim.WeatherParameter.Snow, airsim.WeatherParameter.RoadSnow]]
+    orbit_count = 0
+    starting_offset = 900
+    offset = starting_offset
+    
+    for actor_location in actor_locations:
+        orig_z = actor_location['z'] - 20
+        global_z2 = - 80
+        global_z = orig_z
+        delta_z = [-1,-0.5,0, 0.5,1]
+        delta_r = [5,0,-2] #[15,10,5,0,-5]
 
-    offset = 0
-    delta_z = [-1,-0.5,0, 0.5,1]
-    delta_r = [15,10,5,0,-5]
+        client.moveToPositionAsync(0, 0, global_z2, 5, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+        views_to_capture_from = 1
+        for idx in range(len(weather_patterns)):
+            if idx > 1:
+                for ptrn in weather_patterns[idx-1]:
+                    client.simSetWeatherParameter(ptrn, 0)
+            if idx>0:
+                for ptrn in weather_patterns[idx]:
+                    client.simSetWeatherParameter(ptrn, 0.99 if idx != 1 else 0.6)
 
-    client.moveToPositionAsync(0, 0, z, 5, 60, drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom, yaw_mode=airsim.YawMode(False, 0)).join()
+            if idx == 0:
+                for hours in [8,12]:
+                    DZ = list(random.sample(delta_z, views_to_capture_from))
+                    DR = list(random.sample(delta_r, views_to_capture_from))
+                    print(DZ, DR)
+                    for dz, dr in zip(DZ, DR):
+                        global_z = orig_z + dz
+                        client.simSetTimeOfDay(True, start_datetime ="2018-02-12 {0:02d}:00:00".format(hours), is_start_datetime_dst=True,celestial_clock_speed=1, update_interval_secs=1)
+                        print("Weather: {}, hours: {}, dz: {}, dr: {}, offset: {}".format(idx, hours, dz, dr, offset))
+                        orbit_count+=1
+                        if orbit_count <= (starting_offset//60):
+                            continue
 
-    for idx in range(len(weather_patterns)):
-        if idx > 1:
-            for ptrn in weather_patterns[idx-1]:
-                client.simSetWeatherParameter(ptrn, 0)
-        if idx>0:
-            for ptrn in weather_patterns[idx]:
-                client.simSetWeatherParameter(ptrn, 0.9)
-
-        if idx != 1:
-            for hours in range(8,21,10):
-                random.shuffle(delta_z)
-                random.shuffle(delta_r)
-                for dz, dr in zip(delta_z, delta_r):
-                    client.simSetTimeOfDay(True, start_datetime ="2018-02-12 {0:02d}:00:00".format(hours), is_start_datetime_dst=True,celestial_clock_speed=1, update_interval_secs=1)
-                    offset = OrbitAnimal(actor_location['x'], actor_location['y'], 60+dr, 1.6,5+dz, -30, "", args.output_dir, offset, mesh_id_color_dict) # "tod_{}_weather_{}".format(hours, idx)
-        else:
-            random.shuffle(delta_z)
-            random.shuffle(delta_r)
-            for dz, dr in zip(delta_r, delta_r):
-                client.simSetTimeOfDay(True, start_datetime ="2018-02-12 08:00:00", is_start_datetime_dst=True,celestial_clock_speed=1, update_interval_secs=1)
-                offset = OrbitAnimal(actor_location['x'], actor_location['y'], 60+dr, 1.6,5+dz, -30, "", args.output_dir, offset, mesh_id_color_dict) # "tod_{}_weather_{}".format(hours, idx)
+                        offset = OrbitAnimal(actor_location['x'], actor_location['y'], 10+dr, 1.6,3+dz, -45, "", args.output_dir, offset, mesh_id_color_dict) # "tod_{}_weather_{}".format(hours, idx)
+            else:
+                DZ = list(random.sample(delta_z, views_to_capture_from))
+                DR = list(random.sample(delta_r, views_to_capture_from))
+                print(DZ, DR)
+                for dz, dr in zip(DZ, DR):
+                    global_z = orig_z + dz
+                    client.simSetTimeOfDay(True, start_datetime ="2018-02-12 12:00:00", is_start_datetime_dst=True,celestial_clock_speed=1, update_interval_secs=1)
+                    print("Weather: {}, hours: {}, dz: {}, dr: {}, offset: {}".format(idx, hours, dz, dr, offset))
+                    orbit_count+=1
+                    if orbit_count <= (starting_offset//60):
+                        continue
+                    offset = OrbitAnimal(actor_location['x'], actor_location['y'], 10+dr, 1.6,3+dz, -45, "", args.output_dir, offset, mesh_id_color_dict) # "tod_{}_weather_{}".format(hours, idx)
         
     land()
 
