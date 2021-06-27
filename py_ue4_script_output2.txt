@@ -1,0 +1,73 @@
+playerstart, [520.0, -360.0, 62.0]
+median_location, -2613.0, -5290.0, 3018.0
+median_location, -7913.333333333333, -691.1111111111111, 22.22222222222222
+median_location, -2458.3333333333335, 1408.3333333333333, 3000.0
+median_location, 3370.0, 1882.857142857143, 3130.0
+median_location, 8753.125, -7219.375, 1880.0
+median_location, 7360.0, 9890.0, 3610.0
+median_location, 9150.0, -1650.0, 2990.0
+median_location, 14004.278401692709, 1196.0937805175781, 18.292081197102863
+SM_Barrel_01_Closed_building1
+SM_Barrel_02_Opened_building1
+SM_Barrel_04_Opened_building1
+SM_Barrel_05_Opened_building1
+SM_TableRound_building1
+SM_MilitaryCrate_02_building1
+SM_MilitaryCrate_05_building1
+SM_MilitaryCrateClosed_01_building1
+SM_Crate_02_building1
+SM_Chair_building1
+SM_Barrel_01_Closed_groundfloor
+SM_Barrel_02_Closed_groundfloor
+SM_Barrel_04_Closed_groundfloor
+SM_CardboardBox_05_groundfloor
+SM_Crate_04_groundfloor
+SM_Pallet_02_groundfloor
+SM_Pallet_3_groundfloor
+SM_Tire_04_groundfloor
+SM_Chair2_groundfloor
+SM_Barrel_01_Closed2_building2
+SM_Barrel_01_Closed3_building2
+SM_Barrel_01_Closed4_building2
+SM_Barrel_02_Opened2_building2
+SM_Barrel_02_Opened3_building2
+SM_Barrel_02_Opened4_building2
+SM_Barrel_04_Opened2_building3
+SM_Barrel_04_Closed_building3
+SM_Barrel_05_Opened2_building3
+SM_MilitaryCrateClosed_2_building3
+SM_Pallet_01_building3
+SM_Tire_04_62
+SM_Barrel_02_Closed_building3
+SM_Rock_building3
+SM_Couch_building4
+SM_Couch2_building4
+SM_Couch3_building4
+SM_Couch4_building4
+SM_Couch5_building4
+SM_Couch6_building4
+SM_Barrel_01_Closed2_building4
+SM_Barrel_01_Closed3_building4
+SM_Barrel_01_Closed4_building4
+SM_Barrel_02_Closed_building4
+SM_Barrel_02_Closed2_building4
+SM_Barrel_02_Closed3_building4
+SM_CardboardBox_01_building4
+SM_CardboardBox_2_building4
+SM_Crate_3_building4
+SM_Crate_4_building4
+SM_Barrel_01_Closed2_ground2
+SM_Barrel_01_Closed3_ground2
+SM_Barrel_02_Closed_ground2
+SM_Barrel_01_Closed4_ground2
+SM_Barrel_03_Opened_ground2
+SM_Barrel_04_Opened2_ground2
+SM_Barrel_01_Closed5_ground2
+SM_Barrel_01_Closed6_ground2
+SM_Crate_3_ground2
+SM_Crate_04_ground2
+SM_Crate_01_ground2
+SM_Crate_03_ground2
+SM_Barrel_03_Closed_building5
+SM_MilitaryCrate_02_building6
+SM_MilitaryCrateClosed_01_170
